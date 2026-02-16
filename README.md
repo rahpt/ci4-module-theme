@@ -1,6 +1,6 @@
 # CodeIgniter 4 Module Theme Manager
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/rahpt/ci4-module-theme)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/rahpt/ci4-module-theme)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  
 [![PHP](https://img.shields.io/badge/php-%3E%3D8.1-brightgreen.svg)](https://php.net)
 
@@ -431,5 +431,17 @@ Desenvolvido por **Rahpt**
 
 ---
 
-**Versão**: 1.0.1  
-**Última Atualização**: 2026-02-15
+## 🕒 Histórico de Versões
+
+### [1.1.0] - 2026-02-16
+- **Padronização**: Alinhamento com o ecossistema Rahpt v1.1.0.
+- **Arquitetura**: Implementação de `Registrar` para descoberta automática de views de tema.
+- **Suporte**: Melhoria na lógica de `HookRegistry` para extensibilidade.
+
+### [1.0.1] - 2026-02-15
+- Estabilização inicial dos layouts base.
+
+---
+
+**Versão**: 1.1.1  
+**Última Atualização**: 2026-02-16

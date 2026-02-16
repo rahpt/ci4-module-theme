@@ -3,7 +3,7 @@
 namespace Rahpt\Ci4ModuleTheme\Config;
 
 /**
- * Registrar - Regista o namespace de Views do pacote de temas
+ * Registrar - Autoconfiguração de componentes do pacote ci4-module-theme no CodeIgniter 4.
  */
 class Registrar
 {
