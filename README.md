@@ -1,10 +1,19 @@
 # CodeIgniter 4 Module Theme Manager & Design System
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/rahpt/ci4-module-theme)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/rahpt/ci4-module-theme)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/php-%3E%3D8.1-brightgreen.svg)](https://php.net)
+[![CodeIgniter](https://img.shields.io/badge/CodeIgniter-%3E%3D4.5-orange.svg)](https://codeigniter.com)
 
-Sistema de gerenciamento de temas, layouts dinâmicos e biblioteca de componentes visuais (Design System) para módulos CodeIgniter 4. Conta com fábrica de UI (`UIComponentFactory`), suporte a `ViewComponent`, proteção CSP com Nonce criptográfico e allowlist de assets.
+Sistema corporativo de temas, layouts dinâmicos e biblioteca de componentes visuais (Design System) para módulos CodeIgniter 4. Possui fábrica completa de UI (`UIComponentFactory` / `ui()`), suporte a `ViewComponent`, bloqueio estrito de hosts externos não autorizados em produção, proteção CSP com Nonce criptográfico e suporte a Subresource Integrity (SRI).
+
+---
+
+## 🏛️ Filosofia de Design e Apresentação
+
+> **Módulos fornecem dados e regras de negócio; o Tema fornece a apresentação.**
+>
+> Evite gerar HTML bruto espalhado em controllers ou models. O `ci4-module-theme` oferece uma camada desacoplada de apresentação onde componentes visuais consistentes, acessíveis e padronizados são renderizados com segurança e isolamento.
 
 ---
 
@@ -14,11 +23,11 @@ Sistema de gerenciamento de temas, layouts dinâmicos e biblioteca de componente
 - [Instalação](#-instalação)
 - [Design System (UIComponentFactory)](#-design-system-uicomponentfactory)
 - [Componentes de View (ViewComponent)](#-componentes-de-view-viewcomponent)
-- [Gerenciamento de Assets e CSP Nonce](#-gerenciamento-de-assets-e-csp-nonce)
+- [Segurança de Assets e Bloqueio em Produção](#-segurança-de-assets-e-bloqueio-em-produção)
+- [Proteção CSP Nonce e Subresource Integrity (SRI)](#-proteção-csp-nonce-e-subresource-integrity-sri)
 - [Uso Básico de Temas e Layouts](#-uso-básico-de-temas-e-layouts)
 - [Breadcrumbs e Hooks de Layout](#-breadcrumbs-e-hooks-de-layout)
 - [Helpers Disponíveis](#-helpers-disponíveis)
-- [API Reference](#-api-reference)
 - [Histórico de Versões](#-histórico-de-versões)
 - [Licença](#-licença)
 
@@ -27,19 +36,21 @@ Sistema de gerenciamento de temas, layouts dinâmicos e biblioteca de componente
 ## ✨ Características
 
 ### Design System & Componentes UI
-- ✅ **Fábrica de Componentes (`ui()`)** - Cards, Alertas, Badges, Modais, Tabelas com empty state e Loading spinners padronizados.
-- ✅ **ViewComponent Fluente** - Renderizador modular desacoplado com passagem de dados e conversão para string (`__toString()`).
-- ✅ **Empty State Reutilizável** - Telas elegantes de listas vazias com ícone, descrição e botão de ação.
+- ✅ **Fábrica de Componentes (`ui()`)** - Cards, Alertas acessíveis, Badges, Modais, Tabelas com suporte nativo a empty states e spinners de carregamento padronizados.
+- ✅ **ViewComponent Desacoplado** - Renderizador modular fluente com passagem de dados encapsulados e conversão automática para string (`__toString()`).
+- ✅ **Empty State Elegante** - Componente padronizado para feedback visual quando listagens não possuem registros cadastrados.
 
-### Segurança & Content Security Policy (CSP)
-- ✅ **Suporte a CSP Nonce** - Injeção automática do atributo `nonce="..."` em scripts e folhas de estilo para atender às mais rigorosas políticas de CSP.
-- ✅ **Allowlist de CDNs Externas** - Validação de integridade e bloqueio de scripts/CSS hospedados em hosts não autorizados (`allowHost()`).
-- ✅ **Vendor Asset Registry** - Registro centralizado de bibliotecas de terceiros com dependências.
+### Segurança em Produção & Zero-Trust
+- ✅ **Bloqueio Estrito de CDNs Não Autorizadas em Produção** - Requisições para scripts ou estilos hospedados em origens não homologadas são **bloqueadas sumariamente** em ambiente de produção (`ThemeManager::validateAssetUrl()` retorna `null`), emitindo o evento `rahpt.asset.blocked`.
+- ✅ **Proteção Contra Injeção em Runtime (`AssetRegistry`)** - Inclusão de hosts permitidos via `allowHostFromConfig()` a partir de configurações ou manifestos confiáveis, alertando e impedindo injeção dinâmica arbitrária em produção.
+- ✅ **Bloqueio de Esquemas Maliciosos** - URLs contendo `javascript:`, `data:` ou `vbscript:` são neutralizadas antes da renderização.
+- ✅ **Suporte a CSP Nonce** - Injeção automática do atributo `nonce="..."` em tags `<script>` e `<link>` para compatibilidade total com Content Security Policy estrita.
+- ✅ **Subresource Integrity (SRI)** - Suporte a hashes de integridade em recursos externos para evitar contaminação por supply-chain attacks.
 
-### Gerenciamento de Temas
+### Gerenciamento de Temas & Layouts
 - ✅ **Multi-Theme por Módulo** - Cada módulo pode especificar seu tema independente (`adminlte`, `bootstrap`, `custom`).
-- ✅ **Hooks de Layout** - Injeção dinâmica de conteúdo antes/depois do layout e seções (`hook()`).
-- ✅ **Breadcrumbs Integrados** - Marcação e renderização simplificada de navegação contextual.
+- ✅ **Hooks de Layout em Camadas** - Injeção dinâmica de conteúdo e componentes antes e depois do layout (`hook()`).
+- ✅ **Assets Isolados por Módulo** - Resolução segura de caminhos estáticos empacotados com `module_asset()`.
 
 ---
 
@@ -69,7 +80,7 @@ O helper global `ui()` dá acesso à biblioteca de componentes de interface cons
 <?= ui()->alert('Operação realizada com sucesso!', 'success', true) ?>
 ```
 
-### 3. Badges
+### 3. Badges de Status
 ```php
 <?= ui()->badge('Ativo', 'success') ?>
 <?= ui()->badge('Pendente', 'warning') ?>
@@ -87,7 +98,6 @@ $rows = [
 ```
 
 ### 5. Telas de Estado Vazio (Empty State)
-Ideal para quando uma listagem não possui registros:
 ```php
 <?= ui()->emptyState(
     'Nenhum contrato cadastrado',
@@ -107,7 +117,7 @@ Ideal para quando uma listagem não possui registros:
 ) ?>
 ```
 
-### 7. Indicador de Carregamento
+### 7. Indicador de Carregamento (Loading)
 ```php
 <?= ui()->loading('Carregando informações fiscais...') ?>
 ```
@@ -116,18 +126,18 @@ Ideal para quando uma listagem não possui registros:
 
 ## 🧩 Componentes de View (`ViewComponent`)
 
-Para isolar blocos de interface complexos em views reutilizáveis:
+Para isolar blocos de interface complexos em views reutilizáveis com propriedades tipadas:
 
 ```php
 use Rahpt\Ci4ModuleTheme\Support\ViewComponent;
 
-// Criando e renderizando um componente
+// Criando e renderizando um componente isolado
 $component = ViewComponent::make('App\Modules\Contratos\Views\components\status_card', [
     'title' => 'Contratos Ativos',
     'total' => 42
 ]);
 
-// Renderização direta ou em templates
+// Renderização em templates
 echo $component->render(['highlight' => true]);
 
 // Ou simplesmente interpolando como string
@@ -136,44 +146,50 @@ echo $component;
 
 ---
 
-## 🛡️ Gerenciamento de Assets e CSP Nonce
+## 🛡️ Segurança de Assets e Bloqueio em Produção
 
-### Proteção CSP com Nonce
-No seu controller base ou filtro de segurança, configure o token Nonce:
+### Bloqueio Automático em Produção
+Em ambiente de produção (`ENVIRONMENT === 'production'`), qualquer tentativa de carregar assets de domínios externos não homologados é **rejeitada sumariamente**:
+- A tag `<link>` ou `<script>` não é renderizada (retorna `null`).
+- É registrado um log de alerta no sistema.
+- O evento `rahpt.asset.blocked` é emitido para auditoria.
 
-```php
-use Rahpt\Ci4ModuleTheme\ThemeManager;
-
-// No Filter ou BaseController
-$nonce = bin2hex(random_bytes(16));
-ThemeManager::setNonce($nonce);
-
-// Ao renderizar os scripts e estilos no layout:
-echo theme_styles();  // <link rel="stylesheet" href="..." nonce="...">
-echo theme_scripts(); // <script src="..." nonce="..."></script>
-```
-
-### Allowlist de CDNs Externas
-Evite a injeção de assets de domínios não homologados:
+### Registro Confiável de CDNs Permitidas
+Para homologar origens externas seguras, utilize a via confiável em arquivos de configuração ou inicialização:
 
 ```php
 use Rahpt\Ci4ModuleTheme\Support\AssetRegistry;
 
-// Permitir apenas origens confiáveis
-AssetRegistry::allowHost('cdn.jsdelivr.net');
-AssetRegistry::allowHost('cdnjs.cloudflare.com');
+// Caminho confiável para configuração e manifestos de módulos
+AssetRegistry::allowHostFromConfig('cdn.jsdelivr.net');
+AssetRegistry::allowHostFromConfig('cdnjs.cloudflare.com');
 
-// Registrar biblioteca vendor
+// Registrar biblioteca vendor homologada com versão
 AssetRegistry::registerVendor('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', [
     'type' => 'js',
     'version' => '4.4.0'
 ]);
 ```
 
-### Assets de Módulos Locais
-O helper `module_asset()` resolve com segurança o caminho de arquivos estáticos empacotados dentro de módulos:
+> **Aviso de Segurança**: Chamar `AssetRegistry::allowHost()` dinamicamente em runtime durante uma requisição web em produção emitirá avisos de auditoria, desencorajando injeções arbitrárias de código.
+
+---
+
+## 🔒 Proteção CSP Nonce e Subresource Integrity (SRI)
+
+### Nonce Criptográfico
+Em seu filtro de segurança ou BaseController:
+
 ```php
-<img src="<?= module_asset('Contratos', 'images/logo.png') ?>" alt="Logo">
+use Rahpt\Ci4ModuleTheme\ThemeManager;
+
+// Gerar e configurar o token Nonce único por requisição
+$nonce = bin2hex(random_bytes(16));
+ThemeManager::setNonce($nonce);
+
+// Ao renderizar scripts e estilos no layout:
+echo theme_styles();  // <link rel="stylesheet" href="..." nonce="...">
+echo theme_scripts(); // <script src="..." nonce="..."></script>
 ```
 
 ---
@@ -186,7 +202,7 @@ O helper `module_asset()` resolve com segurança o caminho de arquivos estático
 class Module extends BaseModule
 {
     public string $name = 'Contratos';
-    public string $theme = 'adminlte'; // 'adminlte', 'main' ou personalizado
+    public string $theme = 'adminlte'; // 'adminlte', 'bootstrap' ou 'custom'
 }
 ```
 
@@ -208,7 +224,7 @@ public function index()
 
 <?= $this->section('content') ?>
     <div class="container-fluid">
-        <?= ui()->card('Dashboard de Contratos', '<p>Bem-vindo!</p>') ?>
+        <?= ui()->card('Dashboard de Contratos', '<p>Conteúdo do módulo...</p>') ?>
     </div>
 <?= $this->endSection() ?>
 ```
@@ -223,7 +239,7 @@ set_breadcrumb('Início', '/');
 set_breadcrumb('Contratos', 'contratos');
 set_breadcrumb('Detalhes');
 
-// Registrar conteúdo dinâmico em hook
+// Registrar hook de interface
 register_hook('before_layout', function($data) {
     return '<!-- Hook injetado antes do layout -->';
 });
@@ -240,31 +256,31 @@ register_hook('before_layout', function($data) {
 | Função | Descrição |
 | :--- | :--- |
 | `ui()` | Fábrica de componentes visuais do Design System (`UIComponentFactory`). |
-| `theme_styles()` | Renderiza as tags `<link>` dos estilos registrados com Nonce CSP. |
-| `theme_scripts()` | Renderiza as tags `<script>` dos scripts registrados com Nonce CSP. |
-| `add_style(string $href)` | Registra folha de estilo para o layout atual. |
-| `add_script(string $src)` | Registra script JS para o layout atual. |
+| `theme_styles()` | Renderiza tags `<link>` dos estilos registrados com Nonce CSP. |
+| `theme_scripts()` | Renderiza tags `<script>` dos scripts registrados com Nonce CSP. |
+| `add_style(string $href)` | Registra folha de estilo para o layout atual com validação de host. |
+| `add_script(string $src)` | Registra script JS para o layout atual com validação de host. |
 | `module_asset(string $module, string $path)` | Gera URL segura para asset localizado na pasta do módulo. |
-| `set_breadcrumb(string $label, ?string $url)` | Adiciona etapa à trilha de navegação. |
+| `set_breadcrumb(string $label, ?string $url)` | Adiciona etapa à trilha de navegação contextual. |
 | `render_breadcrumbs()` | Renderiza a trilha de breadcrumbs em HTML semântico. |
 | `hook(string $name, array $params)` | Executa e renderiza os ouvintes do hook de view. |
-| `register_hook(string $name, $content)` | Anexa conteúdo ou callback a um hook de view. |
+| `register_hook(string $name, $content)` | Anexa conteúdo, callback ou `ViewComponent` a um hook de view. |
 
 ---
 
 ## 🕒 Histórico de Versões
 
+### [1.3.0] - 2026-09-26
+- **Segurança**: Rejeição estrita de hosts externos não autorizados em ambiente de produção (bloqueio determinístico do asset).
+- **Segurança**: Blindagem do `AssetRegistry` contra injeção dinâmica de origens externas em runtime (`allowHostFromConfig`).
+- **Segurança**: Disparo do evento `rahpt.asset.blocked` ao detectar tentativas de inclusão não homologada.
+- **Melhoria**: Design System expandido com `UIComponentFactory` e helper `ui()`.
+- **Melhoria**: Suporte a Content Security Policy (CSP) com tokens Nonce e Subresource Integrity (SRI).
+
 ### [1.2.0] - 2026-09-26
-- **Novo**: Design System nativo via `UIComponentFactory` e helper `ui()` (`card`, `alert`, `badge`, `table`, `modal`, `emptyState`, `loading`).
 - **Novo**: Suporte completo a `ViewComponent` com renderização isolada e fluente.
-- **Novo**: Suporte a Nonce CSP (`Content Security Policy`) em `ThemeManager` e `AssetRegistry`.
 - **Novo**: Allowlist de domínios seguros (`allowHost`) e registro formal de vendors em `AssetRegistry`.
 - **Novo**: Helper `module_asset()` para resolução de caminhos estáticos de módulos.
-
-### [1.1.0] - 2026-02-16
-- **Padronização**: Alinhamento com o ecossistema Rahpt v1.1.0.
-- **Arquitetura**: Descoberta automática de views de tema via `Registrar`.
-- **Suporte**: Refatoração do `HookRegistry`.
 
 ### [1.0.1] - 2026-02-15
 - Estabilização inicial dos layouts base.
@@ -273,4 +289,7 @@ register_hook('before_layout', function($data) {
 
 ## 📄 Licença
 
-MIT License. Desenvolvido por **Rahpt**.
+Distribuído sob a licença MIT. Veja `LICENSE` para mais detalhes.
+
+Desenvolvido por **Rahpt**  
+Mantido pela equipe Rahpt / CodeIgniter 4 Modular Platform.

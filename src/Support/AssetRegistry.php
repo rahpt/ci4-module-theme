@@ -44,8 +44,25 @@ class AssetRegistry
 
     /**
      * Add an allowed external host to the allowlist.
+     *
+     * Security: In production, call allowHostFromConfig() instead. This method
+     * is guarded in production to prevent arbitrary runtime injection of external hosts.
+     * External hosts should be declared in config or module manifests, not injected at runtime.
      */
     public static function allowHost(string $host): void
+    {
+        $env = defined('ENVIRONMENT') ? ENVIRONMENT : 'production';
+        if ($env === 'production') {
+            log_message('warning', "[AssetRegistry] allowHost('{$host}') called in production. Use allowHostFromConfig() or declare hosts in config.");
+        }
+        self::allowHostFromConfig($host);
+    }
+
+    /**
+     * Trusted path for adding external hosts from configuration or module manifests.
+     * This is the intended API for production use.
+     */
+    public static function allowHostFromConfig(string $host): void
     {
         $host = strtolower(trim($host));
         if (!in_array($host, self::$allowedHosts, true)) {

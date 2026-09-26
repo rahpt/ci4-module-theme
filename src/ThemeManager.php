@@ -139,6 +139,10 @@ class ThemeManager
 
     /**
      * Validates that an asset URL is safe. Rejects javascript: or data: URIs and checks host allowlist.
+     *
+     * Security: In production environments, external assets from unauthorized hosts are REJECTED.
+     * In development, unauthorized hosts are logged as warnings but the asset is still returned.
+     * This prevents untrusted code from injecting arbitrary external scripts/styles at runtime.
      */
     protected static function validateAssetUrl(string $url): ?string
     {
@@ -152,7 +156,14 @@ class ThemeManager
 
         // Check host against trusted CDN allowlist if external
         if (!AssetRegistry::isHostAllowed($trimmed)) {
-            log_message('warning', "Asset URL uses unapproved external host: {$trimmed}");
+            $env = defined('ENVIRONMENT') ? ENVIRONMENT : 'production';
+            if ($env === 'production') {
+                log_message('warning', "Asset URL uses unapproved external host (BLOCKED in production): {$trimmed}");
+                \CodeIgniter\Events\Events::trigger('rahpt.asset.blocked', $trimmed);
+                return null; // Block in production
+            }
+            // Allow in development/testing but warn
+            log_message('warning', "Asset URL uses unapproved external host (allowed in {$env}): {$trimmed}");
         }
 
         return $trimmed;
