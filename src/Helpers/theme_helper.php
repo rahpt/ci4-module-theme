@@ -82,3 +82,16 @@ if (!function_exists('render_breadcrumbs')) {
         return \Rahpt\Ci4ModuleTheme\Support\Breadcrumbs::render();
     }
 }
+
+if (!function_exists('ui')) {
+    /**
+     * Accesses the standardized modular UI design system factory.
+     */
+    function ui(): \Rahpt\Ci4ModuleTheme\Support\UIComponentFactory {
+        static $factory = null;
+        if ($factory === null) {
+            $factory = new \Rahpt\Ci4ModuleTheme\Support\UIComponentFactory();
+        }
+        return $factory;
+    }
+}

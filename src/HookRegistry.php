@@ -9,6 +9,16 @@ use Rahpt\Ci4ModuleTheme\Support\ViewComponent;
  */
 class HookRegistry
 {
+    // Standardized lifecycle hook points
+    public const HOOK_BEFORE_LAYOUT  = 'before_layout';
+    public const HOOK_AFTER_LAYOUT   = 'after_layout';
+    public const HOOK_BEFORE_SIDEBAR = 'before_sidebar';
+    public const HOOK_AFTER_SIDEBAR  = 'after_sidebar';
+    public const HOOK_BEFORE_CONTENT = 'before_content';
+    public const HOOK_AFTER_CONTENT  = 'after_content';
+    public const HOOK_BEFORE_SCRIPTS = 'before_scripts';
+    public const HOOK_AFTER_SCRIPTS  = 'after_scripts';
+
     /**
      * @var array<string, array<int, array{priority: int, order: int, content: mixed}>>
      */
